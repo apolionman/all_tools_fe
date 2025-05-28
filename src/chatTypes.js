@@ -1,0 +1,2 @@
+// src/chatTypes.ts
+export {};

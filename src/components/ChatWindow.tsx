@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { v4 as uuidv4 } from 'uuid';
+import angelia from '../assets/angelia.png'
 import '../index.css';
 
 const ChatWindow: React.FC = () => {
@@ -196,9 +197,14 @@ const ChatWindow: React.FC = () => {
                     </div>
                   )}
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-gray-800 dark:text-white text-sm">U</span>
+                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <img
+                        src={angelia}
+                        alt="Avatar"
+                        className="w-full h-full object-cover rounded-full"
+                      />
                     </div>
+                  
                   )}
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { testMessage, MessageType } from '@/chatTypes';
+import { MessageType } from '@/chatTypes';
 
 type Props = {
   message: MessageType;
