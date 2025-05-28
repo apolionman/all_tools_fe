@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy_to_local:
-    runs-on: [dgx-2]
+    runs-on: [dgx-2-2]
 
     steps:
       - name: Checkout latest code
