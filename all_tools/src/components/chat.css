@@ -1,0 +1,56 @@
+/* chat.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Markdown Prose Styling Enhancements */
+.prose pre {
+    background-color: #1e1e1e;
+    color: #dcdcdc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+  }
+  
+  .prose code {
+    background-color: rgba(27, 31, 35, 0.05);
+    padding: 0.2em 0.4em;
+    margin: 0;
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: 'Fira Code', monospace;
+  }
+  
+  /* Optional Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.4); /* Tailwind slate-500/40 */
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+  }
+  
+  /* Chat Bubbles Animation (Optional) */
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-25%);
+    }
+  }
+  
+  .animate-bounce {
+    animation: bounce 0.6s infinite;
+  }
+  

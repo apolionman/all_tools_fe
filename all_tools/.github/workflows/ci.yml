@@ -1,0 +1,35 @@
+name: Deploy to Local
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_to_local:
+    runs-on: [dgx-2]
+
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t prepaire_chatbot:dev .
+
+      - name: Stop and delete previous container
+        run: |
+          docker stop prepaire_chatbot || true
+          docker rm prepaire_chatbot || true
+
+      - name: Run Docker container
+        run: |
+          docker run -d \
+            -e VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
+            -e VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
+            -p 3001:3000 \
+            --name prepaire_chatbot \
+            prepaire_chatbot:dev
+
+    environment:
+      name: development
