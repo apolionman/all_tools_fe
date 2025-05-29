@@ -123,7 +123,10 @@ const ChatWindow = () => {
                                             e.preventDefault();
                                             sendMessage();
                                         }
-                                    }, placeholder: "Message AI...", disabled: isTyping }), _jsx("button", { onClick: sendMessage, disabled: isTyping || !input.trim(), className: `m-2 p-2 rounded-full ${isTyping || !input.trim()
+                                    }, placeholder: "Message AI...", disabled: isTyping, style: {
+                                        "marginLeft": "1rem",
+                                        "marginBottom": "0.2rem"
+                                    } }), _jsx("button", { onClick: sendMessage, disabled: isTyping || !input.trim(), className: `m-2 p-2 rounded-full ${isTyping || !input.trim()
                                         ? 'text-gray-400'
                                         : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90'}`, children: _jsx("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "currentColor", className: "w-5 h-5", children: _jsx("path", { d: "M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" }) }) })] }), _jsx("p", { className: "text-xs text-center text-gray-500 dark:text-gray-400 mt-2", children: "AI can make mistakes. Consider checking important information." })] }) })] }));
 };

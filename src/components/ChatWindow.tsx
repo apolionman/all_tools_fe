@@ -186,7 +186,7 @@ const ChatWindow: React.FC = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-700 ${
+                className={`group rounded-xl  w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-700 ${
                   msg.role === 'user' ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-[#444654]'
                 }`}
               >
@@ -282,6 +282,10 @@ const ChatWindow: React.FC = () => {
               }}
               placeholder="Message AI..."
               disabled={isTyping}
+              style={{
+                "marginLeft": "1rem",
+                "marginBottom": "0.2rem"
+              }}
             />
             <button
               onClick={sendMessage}
