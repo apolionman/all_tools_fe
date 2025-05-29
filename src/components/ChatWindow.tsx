@@ -158,21 +158,22 @@ const ChatWindow: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-5 rounded-full w-24 h-24 flex items-center justify-center mb-6">
+            <div className="bg-ochi-gradient p-5 rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-lg">
+
               {/* <div className="text-4xl" style={{"transform": "rotate(-40deg)"}}>
                 <svg width="60" height="60" viewBox="0 0 2723 2663" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M2648.11 525.497C2641.14 379.296 2576.69 241.865 2468.94 143.435C2361.19 45.0055 2218.95 -6.36203 2073.52 0.630884C1681.55 19.5104 1705.48 342.026 1313.5 360.906C921.48 379.786 914.672 56.4503 522.686 75.3297C450.683 78.7945 380.055 96.4837 314.861 127.387C249.651 158.292 191.139 201.805 142.658 255.443C94.1927 309.081 56.6909 371.794 32.3161 440.001C7.95718 508.206 -2.81703 580.572 0.626713 652.962C4.07046 725.353 21.6685 796.354 52.4095 861.908C83.1504 927.463 126.418 986.29 179.78 1035.03C233.127 1083.77 295.509 1121.46 363.341 1145.97C431.189 1170.47 503.16 1181.29 575.163 1177.83C967.181 1158.99 943.265 836.47 1335.24 817.591C1480.66 810.593 1622.9 861.96 1730.65 960.39C1838.4 1058.82 1902.85 1196.25 1909.82 1342.46C1928.6 1736.55 1606.99 1743.4 1625.77 2137.52C1629.22 2209.91 1646.81 2280.91 1677.56 2346.46C1708.3 2412.02 1751.58 2470.85 1804.93 2519.59C1858.29 2568.33 1920.66 2606.01 1988.5 2630.52C2056.35 2655.02 2128.32 2665.83 2200.33 2662.37C2272.33 2658.91 2342.96 2641.21 2408.17 2610.31C2473.36 2579.4 2531.87 2535.89 2580.35 2482.24C2628.82 2428.6 2666.32 2365.9 2690.68 2297.68C2715.05 2229.47 2725.83 2157.11 2722.37 2084.72C2703.59 1690.59 2382.84 1714.69 2364.06 1320.56C2345.28 926.475 2666.89 919.623 2648.11 525.497Z" fill="#5398EE"/>
                 </svg>
               </div> */}
-              <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
-              <img
-                src={ochi}
-                alt="Ochi Avatar"
-                className="w-full h-full object-cover rounded-full"
-              />
+              <div className="w-[6rem] h-[6rem] rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <img
+                  src={ochi}
+                  alt="Ochi Avatar"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
             </div>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">How can I help today?</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Hi I'm Ochi your Virtual Assistant, how can I help today?</h2>
             <p className="text-gray-500 dark:text-gray-400 max-w-md">
               Ask anything about coding, science, or general knowledge. I'm here to assist!
             </p>
@@ -189,7 +190,11 @@ const ChatWindow: React.FC = () => {
                 <div className="text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-2xl xl:max-w-3xl p-4 md:py-6 flex mx-auto">
                   {msg.role === 'assistant' && (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-white text-sm">AI</span>
+                      <img
+                        src={ochi}
+                        alt="Ochi Avatar"
+                        className="w-full h-full object-cover rounded-full"
+                      />
                     </div>
                   )}
                   {msg.role === 'user' && (
@@ -204,7 +209,7 @@ const ChatWindow: React.FC = () => {
                   )}
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">
-                      {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                      {msg.role === 'user' ? 'You' : 'Ochi'}
                     </div>
                     <div className="flex-col gap-1 md:gap-3">
                       <div className="flex flex-grow flex-col max-w-full">
@@ -244,9 +249,9 @@ const ChatWindow: React.FC = () => {
         {isTyping && (
           <div className="w-full bg-gray-50 dark:bg-[#444654] border-black/10 dark:border-gray-700">
             <div className="text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-2xl xl:max-w-3xl p-4 md:py-6 flex mx-auto">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
+              {/* <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
                 <span className="text-white text-sm">AI</span>
-              </div>
+              </div> */}
               <div className="flex items-center">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
