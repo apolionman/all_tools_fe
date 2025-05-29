@@ -4,7 +4,7 @@ FROM node:20-alpine3.19 AS builder
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache libc6-compat bash python3 make g++
+RUN apk add --no-cache libc6-compat bash python3 curl make g++ libc6-compat
 
 # Copy package and install deps
 COPY package*.json ./
@@ -26,7 +26,8 @@ FROM node:20-alpine3.19
 WORKDIR /app
 
 # Install `serve` to serve static files
-RUN npm install -g serve && npm cache clean --force
+RUN apk add --no-cache bash python3 curl && \
+    npm install -g serve && npm cache clean --force
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
