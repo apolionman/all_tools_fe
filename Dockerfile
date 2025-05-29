@@ -17,7 +17,11 @@ COPY tsconfig*.json ./
 COPY vite.config.ts ./
 COPY . .
 
-# Build the app
+# Set build-time arguments
+ARG VITE_BACKEND_BASE_URL
+
+# Build with production optimizations
+ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage
@@ -33,6 +37,8 @@ RUN apk add --no-cache bash python3 curl && \
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
+
+ENV VITE_BACKEND_BASE_URL=${VITE_BACKEND_BASE_URL}
 
 # Start the app
 CMD ["serve", "-s", "dist", "-l", "3000"]
