@@ -16,6 +16,8 @@ const ChatWindow: React.FC = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
 
+  console.log(backend_url)
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
