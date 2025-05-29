@@ -7,6 +7,11 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     cors: true,
+    hmr: {
+      host: '192.168.70.50', // Replace with your actual local IP
+      protocol: 'ws',
+      port: 3006, // Optional, defaults to server.port
+    },
   },
   build: {
     rollupOptions: {
