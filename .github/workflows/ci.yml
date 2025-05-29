@@ -15,7 +15,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t prepaire_chatbot:dev .
+          docker build --build-arg VITE_BACKEND_BASE_URL=${{ secrets.VITE_BACKEND_BASE_URL }} -t prepaire_chatbot:dev .
 
       - name: Stop and delete previous container
         run: |

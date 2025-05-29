@@ -17,8 +17,9 @@ COPY tsconfig*.json ./
 COPY vite.config.ts ./
 COPY . .
 
-# Set build-time arguments
+# Set build-time arguments (MUST BE PASSED DURING BUILD)
 ARG VITE_BACKEND_BASE_URL
+ENV VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL
 
 # Build with production optimizations
 ENV NODE_ENV=production
@@ -38,7 +39,5 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-ENV VITE_BACKEND_BASE_URL=${VITE_BACKEND_BASE_URL}
-
-# Start the app
+# Start the app (NO ENV NEEDED HERE)
 CMD ["serve", "-s", "dist", "-l", "3000"]
