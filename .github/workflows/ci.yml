@@ -27,6 +27,7 @@ jobs:
           docker run -d \
             -e VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
             -e VITE_OLLAMA_URL="${{ secrets.VITE_OLLAMA_URL }}" \
+            - VITE_BACKEND_BASE_URL="${{ secrets.VITE_BACKEND_BASE_URL }}" \
             -p 3006:3000 \
             --name prepaire_chatbot \
             prepaire_chatbot:dev

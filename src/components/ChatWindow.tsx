@@ -14,7 +14,7 @@ const ChatWindow: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const ollama_url = import.meta.env.VITE_OLLAMA_URL;
+  const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,7 +61,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       setIsTyping(true);
-      const response = await fetch(ollama_url, {
+      const response = await fetch(`${backend_url}/api/v1/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ const ChatWindow: React.FC = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`group rounded-xl  w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-700 ${
+                className={`group rounded-xl  w-full text-gray-800 dark:text-gray-100 border-black/10 dark:border-gray-700 ${
                   msg.role === 'user' ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-[#444654]'
                 }`}
               >
@@ -246,7 +246,7 @@ const ChatWindow: React.FC = () => {
         
         {/* Typing indicator */}
         {isTyping && (
-          <div className="w-full bg-gray-50 dark:bg-[#444654] border-b border-black/10 dark:border-gray-700">
+          <div className="w-full bg-gray-50 dark:bg-[#444654] border-black/10 dark:border-gray-700">
             <div className="text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-2xl xl:max-w-3xl p-4 md:py-6 flex mx-auto">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
                 <span className="text-white text-sm">AI</span>
