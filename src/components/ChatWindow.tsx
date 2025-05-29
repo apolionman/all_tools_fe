@@ -80,21 +80,25 @@ const ChatWindow: React.FC = () => {
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
-
+      
         const chunk = decoder.decode(value, { stream: true });
         buffer += chunk;
-
+      
         let boundary = buffer.lastIndexOf('\n');
         if (boundary === -1) continue;
-
+      
         const complete = buffer.slice(0, boundary);
         buffer = buffer.slice(boundary + 1);
-
+      
         const lines = complete.split('\n').filter(Boolean);
-
+      
         for (const line of lines) {
           try {
-            const json = JSON.parse(line);
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('{')) continue; // skip non-JSON lines
+      
+            const json = JSON.parse(trimmed);
+      
             if (json.response) {
               setMessages((prev) =>
                 prev.map((msg) =>
@@ -104,16 +108,17 @@ const ChatWindow: React.FC = () => {
                 )
               );
             }
-
+      
             if (json.done) {
               setIsTyping(false);
               return;
             }
           } catch (err) {
-            console.error('Failed to parse stream chunk:', err, 'Chunk:', line);
+            console.warn('⚠️ Failed to parse chunk:', line);
+            continue;
           }
         }
-      }
+      }      
     } catch (error) {
       console.error('Error streaming from Ollama:', error);
       setIsTyping(false);

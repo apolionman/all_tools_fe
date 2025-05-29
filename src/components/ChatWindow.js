@@ -82,7 +82,10 @@ const ChatWindow = () => {
                 const lines = complete.split('\n').filter(Boolean);
                 for (const line of lines) {
                     try {
-                        const json = JSON.parse(line);
+                        const trimmed = line.trim();
+                        if (!trimmed.startsWith('{'))
+                            continue; // skip non-JSON lines
+                        const json = JSON.parse(trimmed);
                         if (json.response) {
                             setMessages((prev) => prev.map((msg) => msg.id === aiMsgId
                                 ? { ...msg, content: msg.content + json.response }
@@ -94,7 +97,8 @@ const ChatWindow = () => {
                         }
                     }
                     catch (err) {
-                        console.error('Failed to parse stream chunk:', err, 'Chunk:', line);
+                        console.warn('⚠️ Failed to parse chunk:', line);
+                        continue;
                     }
                 }
             }
