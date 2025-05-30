@@ -1,0 +1,128 @@
+.messages-container {
+	overflow: hidden auto;
+}
+.messages-placeholder {
+	font-size: 60px;
+	margin: 20px 0;
+}
+.message-item {
+	max-width: 70%;
+	color: black;
+	margin-bottom: 20px;
+	&[data-sender="true"] {
+		align-items: end;
+		.message-text {
+			color: white;
+			background: linear-gradient(285.83deg, #0974fb 10.15%, #75bde9 102.95%);
+			border-radius: 25px;
+			border-top-right-radius: 0;
+		}
+		margin-left: auto;
+		margin-right: 10px;
+	}
+}
+.message-text {
+	background-color: white;
+	padding: 15px 30px;
+	border-radius: 25px;
+	border-top-left-radius: 0;
+	font-size: 20px;
+}
+.message-time {
+	font-size: 14px;
+	color: #000000b5;
+}
+.next-btn {
+	background-color: var(--primary);
+	border-radius: 50px;
+	height: 70px;
+	box-shadow: 0 0 2.44px transparent;
+	transition: box-shadow 0.3s ease;
+	font-size: 25px;
+	border: none;
+	&:hover {
+		box-shadow: 0 0 2.44px gray;
+	}
+}
+
+.mic-btn-logo {
+	opacity: 0;
+}
+.mic-btn-record {
+	width: 30px;
+	height: 30px;
+	opacity: 1;
+}
+.mic-btn {
+	border: none;
+	border-radius: 50px;
+	height: 70px;
+	background: linear-gradient(90deg, #75bde9 14.67%, #0974fb 96.58%);
+	transition: all 0.3s ease;
+}
+.mic-btn[data-is-recording="true"] {
+	animation: pulse 1.5s infinite;
+}
+.mic-btn[data-is-recorded="true"] {
+	background: black;
+	.mic-btn-record {
+		opacity: 0;
+	}
+	.mic-btn-logo {
+		opacity: 1;
+	}
+}
+
+.mic-btn-logo {
+	width: 55px;
+	height: 55px;
+	opacity: 0;
+	animation: rotate 2s linear infinite;
+}
+.input-text-container {
+	border-radius: 50px;
+	height: 70px;
+	position: relative;
+	padding: 0px 20px;
+	background-color: #eaf1f7;
+	box-shadow:
+		0px 3px 5px 0px #dbdbdb,
+		0px 0px 2.44px 0px var(--white) inset;
+
+	&:focus-within {
+		box-shadow: 0 0 2.44px inset gray;
+	}
+	input {
+		min-width: 300px;
+		background: transparent;
+		border: none;
+		outline: none;
+		font-size: 22px;
+		font-weight: 400;
+		&::placeholder {
+			color: #a3afc4;
+		}
+	}
+}
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+		box-shadow: 0 0 0 0 #0976fb3f;
+	}
+	70% {
+		transform: scale(1.1);
+		box-shadow: 0 0 0 5px #0976fb3f;
+	}
+	100% {
+		transform: scale(1);
+		box-shadow: 0 0 0 0 #0976fb3f;
+	}
+}
+@keyframes rotate {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}

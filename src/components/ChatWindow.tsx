@@ -17,6 +17,110 @@ const ChatWindow: React.FC = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
 
+  // Recording states and refs
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]); // Use ref for audio chunks
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  const startRecording = async () => {
+    // --- Cleanup phase for any previous recording ---
+    if (mediaRecorder) {
+      if (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused') {
+        mediaRecorder.onstop = null; // Detach old handlers to prevent unexpected firing
+        mediaRecorder.ondataavailable = null;
+        mediaRecorder.stop();
+      }
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+    setMediaRecorder(null); // Clear the state for the old recorder
+    audioChunksRef.current = []; // Reset audio chunks ref for the new recording
+
+    // --- Setup phase for new recording ---
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaStreamRef.current = stream;
+      setMediaRecorder(recorder); // Set the new recorder instance
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        if (audioChunksRef.current.length === 0) {
+          console.warn('No audio data recorded.');
+          setInput('⚠️ No audio data was recorded. Please try again.');
+          return;
+        }
+
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('file', blob, 'voice.webm');
+
+        try {
+          const response = await fetch(`${backend_url}/api/v1/transcribe`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Transcription server error: ${response.status} ${response.statusText}. ${errorText}`);
+          }
+
+          const data = await response.json();
+          const transcribedText = data.text || '⚠️ No transcription available.';
+          setInput(transcribedText);
+        } catch (err: any) {
+          console.error('Transcription error:', err);
+          setInput(`⚠️ Failed to transcribe audio: ${err.message}`);
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (err: any) {
+      console.error('Could not start recording:', err);
+      setIsRecording(false); // Ensure UI is not stuck if start fails
+      setInput(`⚠️ Could not start recording: ${err.message}. Check microphone permissions.`);
+      // Clean up any partially initialized resources
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+      setMediaRecorder(null);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      // Only call stop if it's in a state where stop is meaningful
+      if (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused') {
+        mediaRecorder.stop(); // This will trigger recorder.onstop for data processing
+      }
+    }
+
+    // Clean up the media stream and tracks, if the stream reference exists
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+      mediaStreamRef.current = null; // Clear the ref after stopping tracks
+    }
+
+    // Always update the recording state to false when stop is initiated by the user
+    setIsRecording(false);
+    // audioChunksRef.current is cleared at the beginning of startRecording
+    // mediaRecorder state is cleared at the beginning of startRecording
+  };
+
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -52,10 +156,10 @@ const ChatWindow: React.FC = () => {
     const aiMsgId = uuidv4();
     setMessages((prev) => [
       ...prev,
-      { 
-        id: aiMsgId, 
-        role: 'assistant', 
-        content: '', 
+      {
+        id: aiMsgId,
+        role: 'assistant',
+        content: '',
         timestamp: new Date().toISOString()
       },
     ]);
@@ -74,32 +178,39 @@ const ChatWindow: React.FC = () => {
         }),
       });
 
-      const reader = response.body?.getReader();
+      if (!response.body) {
+        throw new Error("Response body is null");
+      }
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
 
-      while (reader) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-      
+
         const chunk = decoder.decode(value, { stream: true });
         buffer += chunk;
-      
+
         let boundary = buffer.lastIndexOf('\n');
         if (boundary === -1) continue;
-      
-        const complete = buffer.slice(0, boundary);
+
+        const completeJsonLines = buffer.slice(0, boundary);
         buffer = buffer.slice(boundary + 1);
-      
-        const lines = complete.split('\n').filter(Boolean);
-      
+
+        const lines = completeJsonLines.split('\n').filter(Boolean);
+
         for (const line of lines) {
           try {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('{')) continue; // skip non-JSON lines
-      
-            const json = JSON.parse(trimmed);
-      
+            const trimmedLine = line.trim();
+            // Ensure it's a valid JSON object before parsing
+            if (!trimmedLine.startsWith('{') || !trimmedLine.endsWith('}')) {
+                 // console.warn('Skipping non-JSON line:', trimmedLine); // Optional: for debugging
+                 continue;
+            }
+            const json = JSON.parse(trimmedLine);
+
             if (json.response) {
               setMessages((prev) =>
                 prev.map((msg) =>
@@ -109,17 +220,22 @@ const ChatWindow: React.FC = () => {
                 )
               );
             }
-      
+
             if (json.done) {
               setIsTyping(false);
               return;
             }
           } catch (err) {
-            console.warn('⚠️ Failed to parse chunk:', line);
+            console.warn('⚠️ Failed to parse JSON chunk:', line, err);
+            // Potentially handle partial JSON or other errors if necessary
             continue;
           }
         }
-      }      
+      }
+      // If loop finishes due to `done` but `json.done` was not true in the last chunk.
+      if (isTyping) {
+        setIsTyping(false);
+      }
     } catch (error) {
       console.error('Error streaming from Ollama:', error);
       setIsTyping(false);
@@ -135,7 +251,7 @@ const ChatWindow: React.FC = () => {
 
   const renderMarkdown = ({ node, inline, className, children, ...props }: any) => {
     const match = /language-(\w+)/.exec(className || '');
-    
+
     return !inline && match ? (
       <SyntaxHighlighter
         style={vscDarkPlus}
@@ -159,12 +275,6 @@ const ChatWindow: React.FC = () => {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="bg-ochi-gradient p-5 rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-lg">
-
-              {/* <div className="text-4xl" style={{"transform": "rotate(-40deg)"}}>
-                <svg width="60" height="60" viewBox="0 0 2723 2663" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2648.11 525.497C2641.14 379.296 2576.69 241.865 2468.94 143.435C2361.19 45.0055 2218.95 -6.36203 2073.52 0.630884C1681.55 19.5104 1705.48 342.026 1313.5 360.906C921.48 379.786 914.672 56.4503 522.686 75.3297C450.683 78.7945 380.055 96.4837 314.861 127.387C249.651 158.292 191.139 201.805 142.658 255.443C94.1927 309.081 56.6909 371.794 32.3161 440.001C7.95718 508.206 -2.81703 580.572 0.626713 652.962C4.07046 725.353 21.6685 796.354 52.4095 861.908C83.1504 927.463 126.418 986.29 179.78 1035.03C233.127 1083.77 295.509 1121.46 363.341 1145.97C431.189 1170.47 503.16 1181.29 575.163 1177.83C967.181 1158.99 943.265 836.47 1335.24 817.591C1480.66 810.593 1622.9 861.96 1730.65 960.39C1838.4 1058.82 1902.85 1196.25 1909.82 1342.46C1928.6 1736.55 1606.99 1743.4 1625.77 2137.52C1629.22 2209.91 1646.81 2280.91 1677.56 2346.46C1708.3 2412.02 1751.58 2470.85 1804.93 2519.59C1858.29 2568.33 1920.66 2606.01 1988.5 2630.52C2056.35 2655.02 2128.32 2665.83 2200.33 2662.37C2272.33 2658.91 2342.96 2641.21 2408.17 2610.31C2473.36 2579.4 2531.87 2535.89 2580.35 2482.24C2628.82 2428.6 2666.32 2365.9 2690.68 2297.68C2715.05 2229.47 2725.83 2157.11 2722.37 2084.72C2703.59 1690.59 2382.84 1714.69 2364.06 1320.56C2345.28 926.475 2666.89 919.623 2648.11 525.497Z" fill="#5398EE"/>
-                </svg>
-              </div> */}
               <div className="w-[6rem] h-[6rem] rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
                 <img
                   src={ochi}
@@ -183,13 +293,13 @@ const ChatWindow: React.FC = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`group rounded-xl  w-full text-gray-800 dark:text-gray-100 border-black/10 dark:border-gray-700 ${
+                className={`group rounded-xl w-full text-gray-800 dark:text-gray-100 border-black/10 dark:border-gray-700 ${
                   msg.role === 'user' ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-[#444654]'
                 }`}
               >
                 <div className="text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-2xl xl:max-w-3xl p-4 md:py-6 flex mx-auto">
                   {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
                       <img
                         src={ochi}
                         alt="Ochi Avatar"
@@ -205,7 +315,6 @@ const ChatWindow: React.FC = () => {
                         className="w-full h-full object-cover rounded-full"
                       />
                     </div>
-                  
                   )}
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">
@@ -244,15 +353,19 @@ const ChatWindow: React.FC = () => {
             ))}
           </div>
         )}
-        
+
         {/* Typing indicator */}
-        {isTyping && (
+        {isTyping && messages.length > 0 && ( // Added messages.length > 0 to avoid showing typing on empty chat
           <div className="w-full bg-gray-50 dark:bg-[#444654] border-black/10 dark:border-gray-700">
             <div className="text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-2xl xl:max-w-3xl p-4 md:py-6 flex mx-auto">
-              {/* <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
-                <span className="text-white text-sm">AI</span>
-              </div> */}
-              <div className="flex items-center">
+               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                 <img
+                    src={ochi}
+                    alt="Ochi Avatar"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+               </div>
+              <div className="flex items-center ml-4"> {/* Added ml-4 for spacing */}
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -281,19 +394,37 @@ const ChatWindow: React.FC = () => {
                   sendMessage();
                 }
               }}
-              placeholder="Message AI..."
+              placeholder="Message Ochi..." // Changed placeholder
               disabled={isTyping}
               style={{
-                "marginLeft": "1rem",
-                "marginBottom": "0.2rem"
+                marginLeft: "1rem", // Keep consistent with original if desired
+                // marginBottom: "0.2rem" // This was causing slight misalignment with buttons
               }}
             />
             <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`m-2 p-2 rounded-full items-center justify-center transition-colors duration-200 ${
+                isRecording 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200'
+              }`}
+              title={isRecording ? 'Stop Recording' : 'Start Recording'}
+            >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              {isRecording ? (
+                <path d="M12 2C10.8954 2 10 2.89543 10 4V12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12V4C14 2.89543 13.1046 2 12 2ZM8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12H18C18 15.3137 15.3137 18 12 18V22H12C12 22 12 22 12 22H12V18C8.68629 18 6 15.3137 6 12H8Z"/>
+              ) : (
+                <path d="M12 14C13.6569 14 15 12.6569 15 11V5C15 3.34315 13.6569 2 12 2C10.3431 2 9 3.34315 9 5V11C9 12.6569 10.3431 14 12 14ZM19 11C19 14.866 15.866 18 12 18C8.13401 18 5 14.866 5 11H7C7 13.7614 9.23858 16 12 16C14.7614 16 17 13.7614 17 11H19Z" />
+              )}
+            </svg>
+            </button>
+
+            <button
               onClick={sendMessage}
               disabled={isTyping || !input.trim()}
-              className={`m-2 p-2 rounded-full ${
+              className={`m-2 p-2 rounded-full transition-colors duration-200 ${
                 isTyping || !input.trim()
-                  ? 'text-gray-400'
+                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90'
               }`}
             >
