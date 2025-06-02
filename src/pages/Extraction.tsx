@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse';
 import { FileText, X } from 'lucide-react';
@@ -8,6 +8,8 @@ const Extraction = () => {
   const [jsonPrompt, setJsonPrompt] = useState<string>('');
   const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
   const [isDragging, setIsDragging] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const [summaries, setSummaries] = useState<
     { filename: string; summary: Record<string, string> }[]
@@ -84,6 +86,91 @@ const Extraction = () => {
     document.body.removeChild(link);
   };
   
+  const generateFromLLM = async () => {
+    const input = `
+      Correct this ${jsonPrompt} in order for the PDF extractor to read the JSON format, If the JSON formatted properly Do not do anything.
+    `;
+  
+    try {
+      setIsTyping(true);
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+  
+      const response = await fetch(`${backend_url}/api/v1/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemma3:27b',
+          prompt: input,
+          stream: true,
+        }),
+        signal: controller.signal,
+      });
+  
+      if (!response.body) throw new Error('No response body');
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      let fullResponse = '';  // <-- accumulate here
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+  
+        let boundary = buffer.lastIndexOf('\n');
+        if (boundary === -1) continue;
+  
+        const completeJsonLines = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 1);
+  
+        const lines = completeJsonLines.split('\n').filter(Boolean);
+  
+        for (const line of lines) {
+          try {
+            const trimmedLine = line.trim();
+            if (!trimmedLine.startsWith('{') || !trimmedLine.endsWith('}')) continue;
+  
+            const json = JSON.parse(trimmedLine);
+            if (json.response) {
+              fullResponse += json.response;  // accumulate
+              setJsonPrompt(fullResponse);    // update textarea with full content so far
+            }
+  
+            if (json.done) {
+              setIsTyping(false);
+              return;
+            }
+          } catch (err) {
+            console.warn('Skipping invalid JSON line:', line);
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Stream aborted.');
+      } else {
+        console.error('LLM Error:', error);
+      }
+    } finally {
+      setIsTyping(false);
+      abortControllerRef.current = null;
+    }
+  };
+  
+
+  const stopStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
 
   return (
     <div className="p-6">
@@ -138,13 +225,32 @@ const Extraction = () => {
         )}
         </div>
 
+        <div className="relative mb-4">
       <textarea
-        className="w-full border p-2 mb-4"
+        className="w-full border p-2 mb-2 rounded font-mono text-sm"
         placeholder="Paste your prompt JSON here..."
         value={jsonPrompt}
         onChange={(e) => setJsonPrompt(e.target.value)}
         rows={10}
       />
+      <button
+        type="button"
+        onClick={generateFromLLM}
+        disabled={isTyping}
+        className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700"
+      >
+        {isTyping ? 'Typing...' : 'Ask Ochi'}
+      </button>
+
+      {isTyping && (
+        <button
+          onClick={stopStreaming}
+          className="text-sm text-red-600 underline mt-2"
+        >
+          Stop
+        </button>
+      )}
+    </div>
 
       <button
         onClick={handleSubmit}
