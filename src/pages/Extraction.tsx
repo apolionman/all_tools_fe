@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse';
+import './extraction.css';
 import { FileText, X } from 'lucide-react';
 
 const Extraction = () => {
@@ -180,7 +181,7 @@ const Extraction = () => {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`relative border-2 p-6 mb-4 text-center transition-all duration-300 ${
+        className={`relative border-2 p-6 mb-4 rounded-lg text-center transition-all duration-300 ${
             isDragging
             ? 'border-blue-500 bg-blue-50'
             : 'border-dashed border-gray-400 bg-white'
@@ -224,15 +225,35 @@ const Extraction = () => {
             </div>
         )}
         </div>
-
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+            <h2 className="text-blue-700 font-semibold text-md mb-1">Tool Description</h2>
+            <p className="text-sm text-blue-800">
+                This tool extracts data from a PDF file and returns a table based on the keywords and structure based on your JSON prompt.
+            </p>
+        </div>
         <div className="relative mb-4">
-      <textarea
-        className="w-full border p-2 mb-2 rounded font-mono text-sm"
-        placeholder="Paste your prompt JSON here..."
-        value={jsonPrompt}
-        onChange={(e) => setJsonPrompt(e.target.value)}
-        rows={10}
-      />
+        <textarea
+            className="w-full border p-2 mb-2 rounded-lg font-mono text-sm"
+            placeholder={`Paste your prompt JSON here...
+            e.g.
+            {
+                "wearable_biosensor": {
+                "type": "string",
+                "description": "The name or type of the wearable biosensor device."
+                },
+                "healthcare_monitoring": {
+                "type": "string",
+                "description": "The healthcare context or purpose for which the device is used."
+                },
+                "biomarkers": {
+                "type": "array",
+                "description": "Biological markers that the device monitors, such as glucose, lactate, etc."
+                }
+            }`}
+            value={jsonPrompt}
+            onChange={(e) => setJsonPrompt(e.target.value)}
+            rows={10}
+        />
       <button
         type="button"
         onClick={generateFromLLM}
@@ -260,25 +281,61 @@ const Extraction = () => {
         {loading ? 'Processing...' : 'Submit'}
       </button>
 
-      {loading && (
-        <div className="mt-4 text-blue-600 font-semibold animate-pulse">
-          Uploading and extracting PDF, please wait...
+      <div className="mt-4 mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <h2 className="text-gray-800 font-semibold text-md mb-2">Sample Output Table</h2>
+        <p className="text-sm text-gray-600 mb-3">
+            Below is an example of how the extracted data may look based on your JSON prompt:
+        </p>
+
+            <div className="overflow-x-auto">
+                <table className="min-w-full text-sm text-left border border-gray-300">
+                <thead className="bg-gray-100">
+                    <tr>
+                    <th className="border px-4 py-2">wearable_biosensor</th>
+                    <th className="border px-4 py-2">healthcare_monitoring</th>
+                    <th className="border px-4 py-2">biomarkers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td className="border px-4 py-2">Dexcom G6</td>
+                    <td className="border px-4 py-2">Diabetes Management</td>
+                    <td className="border px-4 py-2">Glucose</td>
+                    </tr>
+                    <tr>
+                    <td className="border px-4 py-2">Abbott FreeStyle Libre</td>
+                    <td className="border px-4 py-2">Blood Sugar Monitoring</td>
+                    <td className="border px-4 py-2">Glucose</td>
+                    </tr>
+                    <tr>
+                    <td className="border px-4 py-2">Eccrine Sweat Sensor</td>
+                    <td className="border px-4 py-2">Fitness Tracking</td>
+                    <td className="border px-4 py-2">Lactate, Sodium</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
         </div>
+
+      {loading && (
+        <div className="mt-4 text-blue-600 font-semibold animate-pulse flex items-center gap-2">
+            Uploading and extracting PDF, please wait <div className="loader"></div>
+        </div>      
       )}
 
       {error && <div className="text-red-500 mt-4">{error}</div>}
 
       {summaries.length > 0 && (
-        <div className="mt-8 overflow-scroll">
-          <h2 className="text-xl font-semibold mb-2">Extraction Results</h2>
+        <div className="mt-4 mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-scroll">
+            <h2 className="text-gray-800 font-semibold text-md mb-2">Extracted Data</h2>
           <button
                 onClick={downloadCSV}
-                className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+                className="bg-green-600 mb-4 text-white px-4 py-1 rounded hover:bg-green-700"
             >
                 Export as CSV
             </button>
-          <table className="min-w-full border-collapse border border-gray-300">
-            <thead>
+            <table className="min-w-full text-sm text-left rounded-md border border-gray-300">
+            <thead className="bg-gray-100">
               <tr>
                 <th className="border border-gray-300 px-2 py-1">Filename</th>
                 {Object.keys(summaries[0].summary).map((key) => (
