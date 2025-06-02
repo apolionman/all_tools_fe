@@ -7,12 +7,14 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { v4 as uuidv4 } from 'uuid';
 import angelia from '../assets/angelia.png'
 import ochi from '../assets/ochi.png'
+import { FaStop } from "react-icons/fa";
 import '../index.css';
 
 const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
@@ -38,7 +40,7 @@ const ChatWindow: React.FC = () => {
     }
     setMediaRecorder(null); // Clear the state for the old recorder
     audioChunksRef.current = []; // Reset audio chunks ref for the new recording
-
+    // console.log(audioChunksRef);
     // --- Setup phase for new recording ---
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -62,20 +64,21 @@ const ChatWindow: React.FC = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('file', blob, 'voice.webm');
+        console.log(blob.type);
 
         try {
           const response = await fetch(`${backend_url}/api/v1/transcribe`, {
             method: 'POST',
             body: formData,
           });
-
+          console.log(response);
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Transcription server error: ${response.status} ${response.statusText}. ${errorText}`);
           }
 
           const data = await response.json();
-          const transcribedText = data.text || '⚠️ No transcription available.';
+          const transcribedText = data.transcription || '⚠️ No transcription available.';
           setInput(transcribedText);
         } catch (err: any) {
           console.error('Transcription error:', err);
@@ -166,6 +169,9 @@ const ChatWindow: React.FC = () => {
 
     try {
       setIsTyping(true);
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       const response = await fetch(`${backend_url}/api/v1/generate`, {
         method: 'POST',
         headers: {
@@ -176,6 +182,7 @@ const ChatWindow: React.FC = () => {
           prompt: input,
           stream: true,
         }),
+        signal: controller.signal,
       });
 
       if (!response.body) {
@@ -237,32 +244,112 @@ const ChatWindow: React.FC = () => {
         setIsTyping(false);
       }
     } catch (error) {
-      console.error('Error streaming from Ollama:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Streaming stopped by user');
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? { 
+                  ...msg, 
+                  content: msg.content + '\n\n...' 
+                }
+              : msg
+          )
+        );
+      } else {
+        console.error('Error streaming from Ollama:', error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? { ...msg, content: '⚠️ Error fetching response. Please try again.' }
+              : msg
+          )
+        );
+      }
+    } finally {
       setIsTyping(false);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMsgId
-            ? { ...msg, content: '⚠️ Error fetching response. Please try again.' }
-            : msg
-        )
-      );
+      abortControllerRef.current = null; // Reset abort controller
     }
+  };
+
+  const stopStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
+  const exportTableToCSV = (table: HTMLTableElement) => {
+    const rows = Array.from(table.querySelectorAll('tr'));
+    const csv = rows.map(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      return cols.map(col => '"' + col.textContent?.replace(/"/g, '""') + '"').join(',');
+    }).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'table_export.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const renderMarkdown = ({ node, inline, className, children, ...props }: any) => {
     const match = /language-(\w+)/.exec(className || '');
+    const code = String(children).replace(/\n$/, '');
+
+    const handleCopy = async () => {
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch (err) {
+        console.error('Failed to copy code:', err);
+      }
+    };
+
+    // Custom rendering for tables with export option
+    if (node.tagName === 'table') {
+      return (
+        <div className="relative overflow-x-auto my-4 border rounded-lg shadow-sm">
+          <button
+            className="absolute right-2 top-2 text-xs bg-blue-500 text-white px-2 py-1 rounded mb-1"
+            onClick={() => exportTableToCSV(node as HTMLTableElement)}
+          >
+            Export CSV
+          </button>
+          <table className="table-auto w-full border-collapse text-sm text-left">
+            {children}
+          </table>
+        </div>
+      );
+    }
 
     return !inline && match ? (
-      <SyntaxHighlighter
-        style={vscDarkPlus}
-        language={match[1]}
-        PreTag="div"
-        {...props}
-      >
-        {String(children).replace(/\n$/, '')}
-      </SyntaxHighlighter>
+      <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] my-4">
+        <button
+          onClick={handleCopy}
+          className="absolute top-2 right-2 text-sm text-white bg-black/40 hover:bg-black/70 px-2 py-1 rounded-md transition"
+        >
+          Copy
+        </button>
+        <SyntaxHighlighter
+          style={vscDarkPlus}
+          language={match[1]}
+          PreTag="div"
+          customStyle={{
+            borderRadius: '0.75rem',
+            padding: '1rem',
+            backgroundColor: 'transparent',
+            margin: 0
+          }}
+          {...props}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </div>
     ) : (
-      <code className={className} {...props}>
+      <code className="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded" {...props}>
         {children}
       </code>
     );
@@ -322,29 +409,17 @@ const ChatWindow: React.FC = () => {
                     </div>
                     <div className="flex-col gap-1 md:gap-3">
                       <div className="flex flex-grow flex-col max-w-full">
-                        <Markdown
+                      <Markdown
+                          children={msg.content}
                           remarkPlugins={[remarkGfm]}
                           components={{
                             code: renderMarkdown,
-                            p: ({ children }) => (
-                              <p className="prose dark:prose-invert prose-sm max-w-none mb-4 last:mb-0">{children}</p>
-                            ),
-                            ul: ({ children }) => (
-                              <ul className="list-disc pl-5 mb-4">{children}</ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol className="list-decimal pl-5 mb-4">{children}</ol>
-                            ),
-                            li: ({ children }) => (
-                              <li className="mb-1">{children}</li>
-                            ),
-                            blockquote: ({ children }) => (
-                              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic mb-4">{children}</blockquote>
-                            ),
+                            table: renderMarkdown,
+                            th: (props) => <th className="border px-2 py-1 bg-gray-200 dark:bg-gray-700" {...props} />,
+                            td: (props) => <td className="border px-2 py-1" {...props} />,
+                            tr: (props) => <tr className="border-t" {...props} />,
                           }}
-                        >
-                          {msg.content || ''}
-                        </Markdown>
+                        />
                       </div>
                     </div>
                   </div>
@@ -420,22 +495,29 @@ const ChatWindow: React.FC = () => {
             </button>
 
             <button
-              onClick={sendMessage}
-              disabled={isTyping || !input.trim()}
-              className={`m-2 p-2 rounded-full transition-colors duration-200 ${
-                isTyping || !input.trim()
-                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90'
+              onClick={isTyping ? stopStreaming : sendMessage}
+              disabled={isTyping ? false : !input.trim()}
+              className={`m-2 p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${
+                isTyping
+                  ? 'bg-red-500 hover:bg-red-600 text-white' // Red for stop button
+                  : input.trim()
+                    ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:opacity-90'
+                    : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
               }`}
+              style={{ width: '2.5rem', height: '2.5rem' }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5"
-              >
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-              </svg>
+              {isTyping ? (
+                <FaStop className="w-4 h-4" /> // Stop icon
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                </svg>
+              )}
             </button>
           </div>
           <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
