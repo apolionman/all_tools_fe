@@ -25,7 +25,7 @@ jobs:
         run: |
           docker service create \
             --name prepaire_chatbot \
-            --replicas 1 \  # Increase if needed
+            --replicas 1 \
             --publish published=3006,target=3000 \
             --env VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
             --env VITE_OLLAMA_URL="${{ secrets.VITE_OLLAMA_URL }}" \
