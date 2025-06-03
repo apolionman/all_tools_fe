@@ -17,19 +17,19 @@ jobs:
         run: |
           docker build --build-arg VITE_BACKEND_BASE_URL=${{ secrets.VITE_BACKEND_BASE_URL }} -t prepaire_chatbot:dev .
 
-      - name: Stop and delete previous container
+      - name: Remove old service (optional)
         run: |
-          docker stop prepaire_chatbot || true
-          docker rm prepaire_chatbot || true
+          docker service rm prepaire_chatbot || true
 
-      - name: Run Docker container
+      - name: Deploy frontend to Docker Swarm
         run: |
-          docker run -d \
-            -e VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
-            -e VITE_OLLAMA_URL="${{ secrets.VITE_OLLAMA_URL }}" \
-            -e VITE_BACKEND_BASE_URL="${{ secrets.VITE_BACKEND_BASE_URL }}" \
-            -p 3006:3000 \
+          docker service create \
             --name prepaire_chatbot \
+            --replicas 1 \  # Increase if needed
+            --publish published=3006,target=3000 \
+            --env VITE_OPENAI_API_KEY="${{ secrets.VITE_OPENAI_API_KEY }}" \
+            --env VITE_OLLAMA_URL="${{ secrets.VITE_OLLAMA_URL }}" \
+            --env VITE_BACKEND_BASE_URL="${{ secrets.VITE_BACKEND_BASE_URL }}" \
             prepaire_chatbot:dev
 
     environment:
