@@ -16,7 +16,7 @@ const Extraction = () => {
     { filename: string; summary: Record<string, string> }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false); // <- Add loading state
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -174,7 +174,8 @@ const Extraction = () => {
 
 
   return (
-    <div className="p-6">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+        
       <h1 className="text-2xl font-bold mb-4">PDF Extraction Tool</h1>
 
       <div

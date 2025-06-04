@@ -13,7 +13,7 @@ const Extraction = () => {
     const abortControllerRef = useRef(null);
     const [summaries, setSummaries] = useState([]);
     const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false); // <- Add loading state
+    const [loading, setLoading] = useState(false);
     const handleFileChange = (e) => {
         if (e.target.files) {
             setFiles([...e.target.files]);
@@ -155,7 +155,7 @@ const Extraction = () => {
             abortControllerRef.current.abort();
         }
     };
-    return (_jsxs("div", { className: "p-6", children: [_jsx("h1", { className: "text-2xl font-bold mb-4", children: "PDF Extraction Tool" }), _jsxs("div", { onDrop: handleDrop, onDragOver: handleDragOver, onDragLeave: handleDragLeave, className: `relative border-2 p-6 mb-4 rounded-lg text-center transition-all duration-300 ${isDragging
+    return (_jsxs("div", { className: "flex flex-col h-screen bg-gray-50 dark:bg-gray-900", children: [_jsx("h1", { className: "text-2xl font-bold mb-4", children: "PDF Extraction Tool" }), _jsxs("div", { onDrop: handleDrop, onDragOver: handleDragOver, onDragLeave: handleDragLeave, className: `relative border-2 p-6 mb-4 rounded-lg text-center transition-all duration-300 ${isDragging
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-dashed border-gray-400 bg-white'}`, children: [_jsxs("label", { className: "block w-full h-full cursor-pointer relative", children: [_jsx("p", { className: "text-gray-600 pointer-events-none", children: isDragging
                                     ? 'Drop files here'

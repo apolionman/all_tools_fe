@@ -1,5 +1,6 @@
 // src/components/Layout.tsx
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Outlet, useNavigate } from 'react-router-dom';
 import ochi from './assets/ochi.png';
 import '../src/App.css';
@@ -7,6 +8,9 @@ import '../src/App.css';
 const Layout: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const hiddenPaths = ['/tools', '/chat', '/graph_query'];
+  const shouldHide = hiddenPaths.includes(location.pathname);
 
   return (
     <div className="h-screen bg-white dark:bg-gray-900 flex flex-col relative">
@@ -46,60 +50,60 @@ const Layout: React.FC = () => {
 
       {/* Page Content */}
         <div className="flex-1 overflow-scroll">
+        {!shouldHide && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mx-auto p-4">   
-            <div 
-                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
-                style={{
-                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
-                }}
-                onClick={() => {
-                    navigate('/chats');
-                    setShowSettings(false);
-                  }}
-            >
+          <div 
+            className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+            style={{
+              boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+            }}
+            onClick={() => {
+              navigate('/chats');
+              setShowSettings(false);
+            }}
+          >
             <div className="text-xl font-bold mb-2 text-branding">Chat</div>
-                <div className="text-slate-500 text-[15px]">
-                    Ochi's official free AI assistant<br />
-                    Search for Writing Reading and Translation Tools
-                </div>
-            <div className="absolute text-branding"></div>
+            <div className="text-slate-500 text-[15px]">
+              Ochi's official free AI assistant<br />
+              Search for Writing Reading and Translation Tools
             </div>
-            <div 
-                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
-                style={{
-                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
-                }}
-                onClick={() => {
-                    navigate('/tools');
-                    setShowSettings(false);
-                  }}
-            >
-            <div className="text-xl font-bold mb-2 text-branding">PDF Extractor</div>
-                <div className="text-slate-500 text-[15px]">
-                    Dynamically Extract your pdf<br />
-                    Add your own JSON parser to extract pdf
-                </div>
-            <div className="absolute text-branding"></div>
-            </div>
-            <div 
-                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
-                style={{
-                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
-                }}
-                onClick={() => {
-                    navigate('/graph_query');
-                    setShowSettings(false);
-                  }}
-            >
-            <div className="text-xl font-bold mb-2 text-branding">Ask your KG</div>
-                <div className="text-slate-500 text-[15px]">
-                    Dynamically Choose your KG<br />
-                    Query and check your own KG
-                </div>
-            <div className="absolute text-branding"></div>
-            </div>
-        </div>
+          </div>
 
+          <div 
+            className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+            style={{
+              boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+            }}
+            onClick={() => {
+              navigate('/tools');
+              setShowSettings(false);
+            }}
+          >
+            <div className="text-xl font-bold mb-2 text-branding">PDF Extractor</div>
+            <div className="text-slate-500 text-[15px]">
+              Dynamically Extract your pdf<br />
+              Add your own JSON parser to extract pdf
+            </div>
+          </div>
+
+          <div 
+            className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+            style={{
+              boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+            }}
+            onClick={() => {
+              navigate('/graph_query');
+              setShowSettings(false);
+            }}
+          >
+            <div className="text-xl font-bold mb-2 text-branding">Ask your KG</div>
+            <div className="text-slate-500 text-[15px]">
+              Dynamically Choose your KG<br />
+              Query and check your own KG
+            </div>
+          </div>
+        </div>
+      )}
         <Outlet />
         </div>
 
