@@ -45,9 +45,63 @@ const Layout: React.FC = () => {
       </div>
 
       {/* Page Content */}
-      <div className="flex-1 overflow-scroll">
+        <div className="flex-1 overflow-scroll">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mx-auto p-4">   
+            <div 
+                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+                style={{
+                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+                }}
+                onClick={() => {
+                    navigate('/chats');
+                    setShowSettings(false);
+                  }}
+            >
+            <div className="text-xl font-bold mb-2 text-branding">Chat</div>
+                <div className="text-slate-500 text-[15px]">
+                    Ochi's official free AI assistant<br />
+                    Search for Writing Reading and Translation Tools
+                </div>
+            <div className="absolute text-branding"></div>
+            </div>
+            <div 
+                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+                style={{
+                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+                }}
+                onClick={() => {
+                    navigate('/tools');
+                    setShowSettings(false);
+                  }}
+            >
+            <div className="text-xl font-bold mb-2 text-branding">PDF Extractor</div>
+                <div className="text-slate-500 text-[15px]">
+                    Dynamically Extract your pdf<br />
+                    Add your own JSON parser to extract pdf
+                </div>
+            <div className="absolute text-branding"></div>
+            </div>
+            <div 
+                className="relative rounded-2xl pt-6 pb-7 px-8 min-w-0 flex-1 bg-white/50 backdrop-blur-sm cursor-default"
+                style={{
+                    boxShadow: '0 0 0 1px #f1f5f9, 0 2px 4px rgba(0, 0, 0, .05), 0 12px 24px rgba(0, 0, 0, .05)'
+                }}
+                onClick={() => {
+                    navigate('/graph_query');
+                    setShowSettings(false);
+                  }}
+            >
+            <div className="text-xl font-bold mb-2 text-branding">Ask your KG</div>
+                <div className="text-slate-500 text-[15px]">
+                    Dynamically Choose your KG<br />
+                    Query and check your own KG
+                </div>
+            <div className="absolute text-branding"></div>
+            </div>
+        </div>
+
         <Outlet />
-      </div>
+        </div>
 
       {/* Slide-in Settings Panel */}
       <div
@@ -122,6 +176,34 @@ const Layout: React.FC = () => {
               />
             </svg>
             Chat with ochi
+          </button>
+          <button
+            onClick={() => {
+              navigate('/graph_query');
+              setShowSettings(false);
+            }}
+            className="w-full flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.26a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.662z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 12A9 9 0 113 12a9 9 0 0118 0z"
+              />
+            </svg>
+            Query KG
           </button>
         </div>
       </div>
