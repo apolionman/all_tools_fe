@@ -273,15 +273,15 @@ const KGQueryWindow: React.FC = () => {
                     </div>
                   )}
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex-shrink-0 flex items-center justify-center overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center text-sm font-semibold">
-                        You
+                        Y
                       </div>
                     </div>
                   )}
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">
-                      {msg.role === 'user' ? 'Y' : 'Ochi'}
+                      {msg.role === 'user' ? 'You' : 'Ochi'}
                     </div>
                     <div className="flex-col gap-1 md:gap-3">
                       <div className="flex flex-grow flex-col max-w-full">
