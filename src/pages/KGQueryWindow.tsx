@@ -23,7 +23,7 @@ const KGQueryWindow: React.FC = () => {
     { value: '', label: 'Select a Knowledge Graph' },
     { value: 'prime_kg', label: 'Prime KG' },
     { value: 'supplement_kg', label: 'Supplement KG' },
-    { value: 'wear_kg', label: 'WEAR KG' }
+    { value: 'wear_kg', label: 'Wearable KG' }
   ];
 
   const scrollToBottom = () => {
@@ -273,15 +273,15 @@ const KGQueryWindow: React.FC = () => {
                     </div>
                   )}
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center text-sm font-semibold">
-                        YOU
+                        You
                       </div>
                     </div>
                   )}
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">
-                      {msg.role === 'user' ? 'You' : 'Ochi'}
+                      {msg.role === 'user' ? 'Y' : 'Ochi'}
                     </div>
                     <div className="flex-col gap-1 md:gap-3">
                       <div className="flex flex-grow flex-col max-w-full">
