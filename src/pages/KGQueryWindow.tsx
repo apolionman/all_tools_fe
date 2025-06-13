@@ -18,6 +18,15 @@ const KGQueryWindow: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const backend_url = import.meta.env.VITE_BACKEND_BASE_URL;
+  const [sessionId, setSessionId] = useState<string>('');
+
+  useEffect(() => {
+    if (selectedKG) {
+      const newSessionId = uuidv4();
+      setSessionId(newSessionId);
+      setMessages([]);
+    }
+  }, [selectedKG]);
 
   const kgOptions = [
     { value: '', label: 'Select a Knowledge Graph' },
@@ -79,7 +88,7 @@ const KGQueryWindow: React.FC = () => {
       abortControllerRef.current = controller;
   
       // First fetch the query response from the knowledge graph
-      const queryResponse = await fetch(`${backend_url}/api/v1/query-graph?kg_conn=${selectedKG}&query=${input}`, {
+      const queryResponse = await fetch(`${backend_url}/api/v1/query-graph?kg_conn=${selectedKG}&query=${input}&session_id=${sessionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +110,9 @@ const KGQueryWindow: React.FC = () => {
         },
         body: JSON.stringify({
           model: 'gemma3:27b',
-          prompt: `Transform this knowledge graph response into a clear, concise explanation for the user. Keep it brief but explanatory. Use markdown formatting for lists, bold text, etc. when helpful. The response should be easy to understand:\n\n${JSON.stringify(queryData)}`,
+          prompt: `Session Context: ${sessionId}\n\n` +  // Add session context
+            `Conversation History:\n${messages.map(m => `${m.role}: ${m.content}`).join('\n')}\n\n` +  // Add conversation history
+            `Transform this knowledge graph response into a clear, concise explanation:\n\n${JSON.stringify(queryData)}`,
           stream: true,
         }),
         signal: controller.signal,
@@ -282,6 +293,11 @@ const KGQueryWindow: React.FC = () => {
                   <div className="relative flex-grow min-w-0 flex flex-col">
                     <div className="font-semibold select-none mb-1">
                       {msg.role === 'user' ? 'You' : 'Ochi'}
+                      {msg.role === 'assistant' && sessionId && (
+                            <span className="text-xs ml-2 text-gray-500 dark:text-gray-400">
+                            Session: {sessionId.slice(0, 8)}...
+                            </span>
+                        )}
                     </div>
                     <div className="flex-col gap-1 md:gap-3">
                       <div className="flex flex-grow flex-col max-w-full">
@@ -341,6 +357,22 @@ const KGQueryWindow: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center mb-2 gap-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+                {sessionId ? `Session: ${sessionId.slice(0, 8)}...` : "No active session"}
+            </div>
+            <button
+                onClick={() => {
+                const newSessionId = uuidv4();
+                setSessionId(newSessionId);
+                setMessages([]);
+                }}
+                className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+            >
+                New Session
+            </button>
           </div>
 
           <div className="flex items-end rounded-xl bg-gray-100 dark:bg-gray-700/50 border dark:border-gray-700 shadow-sm">
